@@ -55,6 +55,9 @@ test('fail add menu item', async () => {
 });
 
 test('get user orders', async () => {
+    const getOrderRes = await request(app).get('/api/order').set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(getOrderRes.status).toBe(200);
+    expect(getOrderRes.body.page).toBeGreaterThanOrEqual(1);
 });
 
 test('create order', async () => {
