@@ -55,13 +55,15 @@ test('fail add menu item', async () => {
 });
 
 test('get user orders', async () => {
+});
+
+test('create order', async () => {
     const userOrder = {franchiseId: 1, storeId: 1, items:[{ menuId: 1, description: randomName(), price: 0.05 }]}
 
     const addRes = await request(app).post('/api/order').set('Authorization', `Bearer ${testUserAuthToken}`).send(userOrder);
     expect(addRes.status).toBe(200);
     expect(addRes.body.jwt).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
-});
-
-test('create order', async () => {
-    // TODO '/api/order'
+    
+    const { id, ...response } = addRes.body.order;
+    expect(response).toEqual(userOrder);
 });
