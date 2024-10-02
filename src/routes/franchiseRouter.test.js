@@ -11,12 +11,12 @@ function randomName() {
 }
 
 async function createFranchise() {
-    const newFranchise = {name: randomName(), admins: [{email: "f@jwt.com"}]}
+    const newFranchise = {name: randomName(), admins: [{email: testUser.email}]};
 
-    const createRes = await request(app).post('/api/franchise').set('Authorization', `Bearer ${testUserAuthToken}`).send(newFranchise);    
+    const createRes = await request(app).post('/api/franchise').set('Authorization', `Bearer ${testUserAuthToken}`).send(newFranchise);        
     expect(createRes.status).toBe(200);
     expect(createRes.body.name).toBe(newFranchise.name);
-    expect(createRes.body.admins[0].id).toBe(3);
+    expect(createRes.body.admins[0].id).toBe(testID);
 
     return createRes.body.id;
 }
@@ -42,9 +42,9 @@ test('get franchises', async () => {
 
 test('get user franchises', async () => {
     await createFranchise();
-    const getUserFranchisesRes = await request(app).get(`/api/franchise/3`).set('Authorization', `Bearer ${testUserAuthToken}`);
+    const getUserFranchisesRes = await request(app).get(`/api/franchise/${testID}`).set('Authorization', `Bearer ${testUserAuthToken}`);
     expect(getUserFranchisesRes.status).toBe(200);
-    expect(getUserFranchisesRes.body[0].admins[0].id).toBe(3);
+    expect(getUserFranchisesRes.body[0].admins[0].id).toBe(testID);
 });
 
 test('create franchise', createFranchise);
