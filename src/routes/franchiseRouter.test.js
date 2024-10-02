@@ -17,6 +17,8 @@ async function createFranchise() {
     expect(createRes.status).toBe(200);
     expect(createRes.body.name).toBe(newFranchise.name);
     expect(createRes.body.admins[0].id).toBe(3);
+
+    return createRes.body.id;
 }
   
 beforeAll(async () => {
@@ -46,3 +48,11 @@ test('get user franchises', async () => {
 });
 
 test('create franchise', createFranchise);
+
+test('delete franchise', async () => {
+    const franchiseId = await createFranchise();
+
+    const getUserFranchisesRes = await request(app).delete(`/api/franchise/${franchiseId}`).set('Authorization', `Bearer ${testUserAuthToken}`);
+    expect(getUserFranchisesRes.status).toBe(200);
+    expect(getUserFranchisesRes.body.message).toBe("franchise deleted");
+});

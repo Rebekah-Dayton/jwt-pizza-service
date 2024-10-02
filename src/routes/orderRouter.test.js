@@ -69,4 +69,5 @@ test('create order', async () => {
     
     const { id, ...response } = addRes.body.order;
     expect(response).toEqual(userOrder);
+    expect(id).toBeDefined();
 });
