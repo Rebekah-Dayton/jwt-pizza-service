@@ -83,7 +83,7 @@ authRouter.post(
 // login
 authRouter.put(
   '/',
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     try {
       const { email, password } = req.body;
       const user = await DB.getUser(email, password);
