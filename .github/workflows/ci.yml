@@ -87,6 +87,16 @@ jobs:
           git commit -m "generated"
           git push
 
+      - name: Annotate deployment in Grafana
+        run: |
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":7, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":3, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":1, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":8, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":9, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":10, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://rebekahdayton.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"fe31itcsqa7swa", "panelId":5, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+
       - name: Create dist
         run: |
           mkdir dist
