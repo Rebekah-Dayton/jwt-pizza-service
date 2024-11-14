@@ -60,9 +60,10 @@ franchiseRouter.endpoints = [
 franchiseRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("get");
+    let start = Date.now();
 
     res.json(await DB.getFranchises(req.user));
+    metrics.incrementHttpRequests("get", Date.now() - start);    
   })
 );
 
@@ -71,7 +72,7 @@ franchiseRouter.get(
   '/:userId',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("get");
+    let start = Date.now();
 
     let result = [];
     const userId = Number(req.params.userId);
@@ -80,6 +81,7 @@ franchiseRouter.get(
     }
 
     res.json(result);
+    metrics.incrementHttpRequests("get", Date.now() - start);
   })
 );
 
@@ -88,7 +90,7 @@ franchiseRouter.post(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("post");
+    let start = Date.now();
 
     if (!req.user.isRole(Role.Admin)) {
       throw new StatusCodeError('unable to create a franchise', 403);
@@ -96,6 +98,7 @@ franchiseRouter.post(
 
     const franchise = req.body;
     res.send(await DB.createFranchise(franchise));
+    metrics.incrementHttpRequests("post", Date.now() - start);
   })
 );
 
@@ -103,7 +106,7 @@ franchiseRouter.post(
 franchiseRouter.delete(
   '/:franchiseId',
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("delete");
+    let start = Date.now();
 
     if (!req.user.isRole(Role.Admin)) {
       throw new StatusCodeError('unable to delete a franchise', 403);
@@ -112,6 +115,7 @@ franchiseRouter.delete(
     const franchiseId = Number(req.params.franchiseId);
     await DB.deleteFranchise(franchiseId);
     res.json({ message: 'franchise deleted' });
+    metrics.incrementHttpRequests("delete", Date.now() - start);
   })
 );
 
@@ -120,7 +124,7 @@ franchiseRouter.post(
   '/:franchiseId/store',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("post");
+    let start = Date.now();
 
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
@@ -129,6 +133,7 @@ franchiseRouter.post(
     }
 
     res.send(await DB.createStore(franchise.id, req.body));
+    metrics.incrementHttpRequests("post", Date.now() - start);
   })
 );
 
@@ -137,7 +142,7 @@ franchiseRouter.delete(
   '/:franchiseId/store/:storeId',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("delete");
+    let start = Date.now();
 
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
@@ -148,6 +153,7 @@ franchiseRouter.delete(
     const storeId = Number(req.params.storeId);
     await DB.deleteStore(franchiseId, storeId);
     res.json({ message: 'store deleted' });
+    metrics.incrementHttpRequests("delete", Date.now() - start);
   })
 );
 

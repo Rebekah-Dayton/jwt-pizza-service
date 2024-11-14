@@ -68,15 +68,17 @@ authRouter.authenticateToken = (req, res, next) => {
 authRouter.post(
   '/',
   asyncHandler(async (req, res) => {
-    metrics.incrementUserCount("post");
+    let start = Date.now();
 
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
+      metrics.incrementHttpRequests("post", Date.now() - start);
       return res.status(400).json({ message: 'name, email, and password are required' });
     }
     const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
     const auth = await setAuth(user);
     res.json({ user: user, token: auth });
+    metrics.incrementUserCount("post", Date.now() - start);
   })
 );
 
@@ -84,14 +86,15 @@ authRouter.post(
 authRouter.put(
   '/',
   asyncHandler(async (req, res) => {
+    let start = Date.now();
     try {
       const { email, password } = req.body;
       const user = await DB.getUser(email, password);
       const auth = await setAuth(user);
       res.json({ user: user, token: auth });
-      metrics.addAuthAttempt(true);
+      metrics.addAuthAttempt(true, Date.now() - start);
     } catch (error) {
-      metrics.addAuthAttempt(false);
+      metrics.addAuthAttempt(false, Date.now() - start);
       throw error;
     }
   })
@@ -102,10 +105,11 @@ authRouter.delete(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metrics.decrementUserCount();
+    let start = Date.now();
 
     clearAuth(req);
     res.json({ message: 'logout successful' });
+    metrics.decrementUserCount(Date.now() - start);
   })
 );
 
@@ -114,17 +118,19 @@ authRouter.put(
   '/:userId',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metrics.incrementHttpRequests("put");
+    let start = Date.now();
 
     const { email, password } = req.body;
     const userId = Number(req.params.userId);
     const user = req.user;
     if (user.id !== userId && !user.isRole(Role.Admin)) {
+      metrics.incrementHttpRequests("put", Date.now() - start)
       return res.status(403).json({ message: 'unauthorized' });
     }
 
     const updatedUser = await DB.updateUser(userId, email, password);
     res.json(updatedUser);
+    metrics.incrementHttpRequests("put", Date.now() - start)
   })
 );
 

@@ -17,8 +17,18 @@ class Metrics {
         this.failed_pizzas = 0;
         this.revenue = 0
 
+        this.pizza_latency = 0;
+        this.general_latency = 0;
+
         this.sendMetricsPeriodically(6000)
     };
+
+    resetValues() {
+        this.succss_authentication = 0;
+        this.failed_authentication = 0;
+        this.pizzas_sold = 0;
+        this.failed_pizzas = 0;
+    }
 
     // Periodic Reporting
     sendMetricsPeriodically(period) {
@@ -38,8 +48,11 @@ class Metrics {
             this.sendAuthenticationMetricsToGrafana();
             // Pizza data
             this.sendPizzaMetricsToGrafana();
+           // Latency data
+           this.sendLatencyMetricsToGrafana();
 
             console.log()
+            this.resetValues();
         } catch (error) {
             console.log('Error sending metrics', error);
         }
@@ -47,7 +60,8 @@ class Metrics {
         timer.unref();
     };
 
-    incrementHttpRequests(type) {
+    incrementHttpRequests(type, time) {
+        this.general_latency += time;
         this.totalRequests++;
         switch(type) {
             case "get":
@@ -65,24 +79,47 @@ class Metrics {
         };
     }
 
-    incrementUserCount(type) {
-        this.incrementHttpRequests(type);
+    incrementUserCount(type, time) {
+        this.incrementHttpRequests(type, time);
         this.active_users++;
     }
 
-    decrementUserCount() {
-        this.incrementHttpRequests("delete");
+    decrementUserCount(time) {
+        this.incrementHttpRequests("delete", time);
         this.active_users--;
     }
 
-    addAuthAttempt(status) {
-        this.incrementHttpRequests("put")
+    addAuthAttempt(status, time) {
         if (status) {
-            this.incrementUserCount();
+            this.incrementUserCount("put", time);
             this.succss_authentication++;
         } else {
+            this.incrementHttpRequests("put", time)
             this.failed_authentication++;
         }
+    }
+
+    updateOrderMetrics(order, status, time) {
+        this.pizza_latency += time;
+        this.incrementHttpRequests("post", time);
+
+        if (status) {
+            let pizzas = order.items;
+            pizzas.forEach((item) => {
+                this.pizzas_sold++;
+                this.revenue += item.price;
+            });
+        } else {
+            this.failed_pizzas++;
+        }
+    }
+
+    sendLatencyMetricsToGrafana() {
+        const pizza = `pizza_latency,source=${config.metrics.source} delay=${this.pizza_latency}`;
+        const general = `request_latency,source=${config.metrics.source} delay=${this.general_latency}`;
+        this.sendMetrictoGrafana(pizza);
+        this.sendMetrictoGrafana(general);
+
     }
 
     sendAuthenticationMetricsToGrafana() {
@@ -95,6 +132,15 @@ class Metrics {
     sendHttpMetricToGrafana(metricPrefix, httpMethod, metricName, metricValue) {
         const metric = `${metricPrefix},source=${config.metrics.source},method=${httpMethod} ${metricName}=${metricValue}`;
         this.sendMetrictoGrafana(metric);
+    }
+
+    sendPizzaMetricsToGrafana() {
+        const pizza_sold = `pizza_purchases,source=${config.metrics.source} count=${this.pizzas_sold}`;
+        const failed_orders = `failed_purchases,source=${config.metrics.source} count=${this.failed_pizzas}`;
+        const pizza_profit = `revenue,source=${config.metrics.source} count=${this.revenue}`;
+        this.sendMetrictoGrafana(pizza_sold);
+        this.sendMetrictoGrafana(failed_orders);
+        this.sendMetrictoGrafana(pizza_profit);
     }
 
     sendSystemMetricsToGrafana() {
@@ -112,7 +158,7 @@ class Metrics {
         })
         .then((response) => {
             if (!response.ok) {
-                console.error('Failed to push metrics data to Grafana', response);
+                console.error(`****Failed to push ${metric} data to Grafana`, response);
             } else {
                 console.log(`Pushed ${metric}`);
             }
@@ -135,10 +181,6 @@ class Metrics {
         const memoryUsage = (usedMemory / totalMemory) * 100;
         return memoryUsage.toFixed(2);
     }
-
-    // Purchase Metrics Code
-    // TODO: track purchases - how long, how many, how much, success
-
 }
 
 const metrics = new Metrics();
