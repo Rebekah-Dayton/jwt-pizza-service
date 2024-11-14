@@ -101,7 +101,7 @@ orderRouter.post(
       metrics.updateOrderMetrics(order, true, Date.now() - start);
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
     } else {
-      metrics.updateOrderMetrics(none, false, Date.now() - start);
+      metrics.updateOrderMetrics(null, false, Date.now() - start);
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
     }
   })
