@@ -20,8 +20,20 @@ class Logger {
     next();
   };
 
+  dbLogger(query) {
+    this.log('info', 'db', query);
+  };
+
+  factoryLogger(orderInfo) {
+    this.log('info', 'factory', orderInfo);
+  };
+
+  unhandledErrorLogger(err) {
+    this.log('error', 'unhandledError', { message: err.message, status: err.statusCode });
+  };
+
   log(level, type, logData) {
-    const labels = { component: config.logger.source, level: level, type: type };
+    const labels = { component: config.logging.source, level: level, type: type };
     const values = [this.nowString(), this.sanitize(logData)];
     const logEvent = { streams: [{ stream: labels, values: [values] }] };
 
@@ -43,14 +55,27 @@ class Logger {
     return logData.replace(/\\"password\\":\s*\\"[^"]*\\"/g, '\\"password\\": \\"*****\\"');
   }
 
-  sendLogToGrafana(event) {
+  async sendLogToGrafana(event) {
+    // Log to factory
+    const res = await fetch(`${config.factory.url}/api/log`, {
+        method: 'POST',
+        body: {
+          apiKey: config.factory.apiKey,
+          event: event,
+        },
+      });
+      if (!res.ok) {
+        console.log('Failed to send log to factory');
+    };
+
+    // Log to Grafana
     const body = JSON.stringify(event);
-    fetch(`${config.logger.url}`, {
+    fetch(`${config.logging.url}`, {
       method: 'post',
       body: body,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.logger.userId}:${config.logger.apiKey}`,
+        Authorization: `Bearer ${config.logging.userId}:${config.logging.apiKey}`,
       },
     }).then((res) => {
       if (!res.ok) console.log('Failed to send log to Grafana');
